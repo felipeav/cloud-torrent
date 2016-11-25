@@ -14,7 +14,7 @@ import (
 	"time"
 
 	"github.com/jpillora/cloud-torrent/engine"
-	"github.com/suryadewa/ForNesiaToRrent/static"
+	"github.com/jpillora/cloud-torrent/static"
 	"github.com/jpillora/go-realtime"
 	"github.com/jpillora/requestlog"
 	"github.com/jpillora/scraper/scraper"
@@ -75,15 +75,16 @@ func (s *Server) Run(version string) error {
 	//will use a the local embed/ dir if it exists, otherwise will use the hardcoded embedded binaries
 	s.files = http.HandlerFunc(s.serveFiles)
 	s.static = ctstatic.FileSystemHandler()
-	s.scraper = &scraper.Handler{Log: false}
+	s.scraper = &scraper.Handler{
+		Log: false, Debug: false,
+		Headers: map[string]string{
+			"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.71 Safari/537.36",
+		},
+	}
 	if err := s.scraper.LoadConfig(defaultSearchConfig); err != nil {
 		log.Fatal(err)
 	}
-	s.state.SearchProviders = s.scraper.Config //share scraper config
-	s.scraperh = http.StripPrefix("/search", s.scraper)
-
-	s.engine = engine.New()
-
+	
 	//realtime
 	s.rt = realtime.NewHandler()
 	if err := s.rt.Add("state", &s.state); err != nil {
