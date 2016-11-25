@@ -1,38 +1,5 @@
 package server
 
-import (
-	"bytes"
-	"io/ioutil"
-	"log"
-	"net/http"
-	"time"
-)
-
-var currentConfig = defaultSearchConfig
-
-func (s *Server) fetchSearchConfig() error {
-	resp, err := http.Get(searchConfigURL)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-	newConfig, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return err
-	}
-	if bytes.Equal(currentConfig, newConfig) {
-		return nil //skip
-	}
-	if err := s.scraper.LoadConfig(newConfig); err != nil {
-		return err
-	}
-	s.state.SearchProviders = s.scraper.Config
-	s.state.Update()
-	log.Printf("Loaded new search providers")
-	currentConfig = newConfig
-	return nil
-}
-
 //see github.com/jpillora/scraper for config specification
 //cloud-torrent uses "<id>-item" handlers
 var defaultSearchConfig = []byte(`{
